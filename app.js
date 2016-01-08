@@ -53,10 +53,10 @@ function parseCellValueByRawValueAndColumnIndex(rawValue, columnIndex) {
 }
 
 function parseCellDateStringToDate(cellDateString) {
-    var stringParts = cellDateString.split("/");
-    var year = stringParts[2];
+    var stringParts = cellDateString.split("-");
+    var year = stringParts[0];
     var month = parseInt(stringParts[1])-1;
-    var day = stringParts[0];
+    var day = stringParts[2];
     return new Date(year, month, day);
 }
 
@@ -72,6 +72,7 @@ function getNumberOfComponentsByCellValue(cellValue) {
 } 
 
 function parseCellValueFormulaToNumber(cellValue) {
+    var cellValue = cellValue.replace(/;/g, "+");
     return eval(cellValue);
 }
 
