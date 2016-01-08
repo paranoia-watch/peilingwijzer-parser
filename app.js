@@ -6,10 +6,19 @@
 
 var fs = require("fs"),
     argv = require('minimist')(process.argv.slice(2)),
-    FILE_URL = argv.FILE_URL;
+    INPUT_FILE = argv.I,
+    OUTPUT_FILE = argv.O;
+
+function main() {
+    var fileData = getFileContents();
+    var fieldNames = parseFieldNamesFromFileData(fileData);
+    var rowsData = parseDataRowsFromFileData(fileData);
+    var data = parseObjectFromRowsDataAndFieldNames(rowsData, fieldNames);
+    serveData(data);
+}
 
 function getFileContents() {
-    return fs.readFileSync(FILE_URL).toString()
+    return fs.readFileSync(INPUT_FILE).toString()
 }
 
 function parseFieldNamesFromFileData(fileData) {
@@ -74,8 +83,18 @@ function getCellValuesByRowData(rowData) {
     return rowData.split(",").slice(this.length, -1);    
 }
 
-var fileData = getFileContents();
-var fieldNames = parseFieldNamesFromFileData(fileData);
-var rowsData = parseDataRowsFromFileData(fileData);
-var data = parseObjectFromRowsDataAndFieldNames(rowsData, fieldNames);
-console.log("data", data);
+function serveData(data) {
+    var jsonData = JSON.stringify(data);
+    if(!OUTPUT_FILE) return printDataOnScreen(jsonData);
+    saveDataToFile(jsonData);
+}
+
+function printDataOnScreen(jsonData) {
+    console.log(jsonData);
+}
+
+function saveDataToFile(jsonData) {
+    fs.writeFileSync(OUTPUT_FILE, jsonData);
+}
+
+main();
