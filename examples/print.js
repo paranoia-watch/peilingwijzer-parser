@@ -1,5 +1,4 @@
-var peilingWijzerParser = require(__dirname + "/../app"),
-    exportURL = "/Users/woutervroege/Desktop/onzin.json";
+var peilingWijzerParser = require(__dirname + "/../app");
 
 peilingWijzerParser.get(function(json) {
     console.log(json);
