@@ -1,5 +1,12 @@
-var peilingWijzerParser = require(__dirname + "/../app");
+/*
+ * @package charli
+ * @subpackage peilingwijzer-parser
+ * @copyright Copyright(c) 2016 Paranoia Watch
+ * @author Wouter Vroege <wouter AT woutervroege DOT nl>
+ */
 
-peilingWijzerParser.get(function(json) {
-    console.log(json);
-});
+var peilingWijzerParser = require(__dirname + '/../app')
+
+peilingWijzerParser.get(function (json) {
+  console.log(json)
+})
