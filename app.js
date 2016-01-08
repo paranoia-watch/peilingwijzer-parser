@@ -5,20 +5,45 @@
  */
 
 var fs = require("fs"),
+    https = require("https"),
     argv = require('minimist')(process.argv.slice(2)),
     INPUT_FILE = argv.I,
     OUTPUT_FILE = argv.O;
 
-function main() {
-    var fileData = getFileContents();
-    var fieldNames = parseFieldNamesFromFileData(fileData);
-    var rowsData = parseDataRowsFromFileData(fileData);
-    var data = parseObjectFromRowsDataAndFieldNames(rowsData, fieldNames);
-    serveData(data);
+function main(callback) {
+    getFileContents(function(fileData) {
+        var fieldNames = parseFieldNamesFromFileData(fileData);
+        var rowsData = parseDataRowsFromFileData(fileData);
+        var data = parseObjectFromRowsDataAndFieldNames(rowsData, fieldNames);
+        var json = serveData(data);
+        if(callback) callback(json);      
+    });
 }
 
-function getFileContents() {
-    return fs.readFileSync(INPUT_FILE).toString()
+function getFileContents(callback) {
+    if(!INPUT_FILE) return downloadFileContentsFromURL(callback);
+    getLocalFileContents(callback);
+}
+
+function downloadFileContentsFromURL(callback) {
+    var chunks = [];
+    https.get("https://dl.dropboxusercontent.com/u/31727287/Peilingwijzer/Last/Results_DyGraphs.txt", function(res) {
+        // if(err) return console.error("Error downloading file", err);
+        res.on("data", function(chunk) {
+            chunks.push(chunk);
+        })
+        res.on("end", function() {
+            var data = chunks.join("").toString();
+            callback(data);
+        })
+    })
+}
+
+function getLocalFileContents(callback) {
+    return fs.readFile(INPUT_FILE, function(err, data) {
+        if(err) return console.error("Error reading file", err);
+        callback(data.toString());
+    })
 }
 
 function parseFieldNamesFromFileData(fileData) {
@@ -28,7 +53,7 @@ function parseFieldNamesFromFileData(fileData) {
 }
 
 function parseDataRowsFromFileData(fileData) {
-    return fileData.split(/\n/g).slice(1);
+    return fileData.split(/\n/g).slice(1,-1);
 }
 
 function parseObjectFromRowsDataAndFieldNames(rowsData, fieldNames) {
@@ -40,7 +65,7 @@ function parseObjectFromRowsDataAndFieldNames(rowsData, fieldNames) {
 function parseSingleObjectFromRowDataAndFieldNames(rowData, fieldNames) {
     var object = {};
     var cellValues = getCellValuesByRowData(rowData);
-    if(fieldNames.length !== cellValues.length) return console.error("number of field names doesn't match the number of cell values");   
+    if(fieldNames.length !== cellValues.length) return console.error("number of field names ("+fieldNames.length+") doesn't match the number of cell values ("+cellValues.length+")");   
     for(var i in fieldNames) {
         object[fieldNames[i]] = parseCellValueByRawValueAndColumnIndex(cellValues[i], i);
     }
@@ -86,16 +111,19 @@ function getCellValuesByRowData(rowData) {
 
 function serveData(data) {
     var jsonData = JSON.stringify(data);
-    if(!OUTPUT_FILE) return printDataOnScreen(jsonData);
+    if(!OUTPUT_FILE) return jsonData;
     saveDataToFile(jsonData);
-}
-
-function printDataOnScreen(jsonData) {
-    console.log(jsonData);
 }
 
 function saveDataToFile(jsonData) {
     fs.writeFileSync(OUTPUT_FILE, jsonData);
 }
 
-main();
+exports.saveToDisk = function(exportPath, callback) {
+    OUTPUT_FILE = exportPath;
+    main(callback);
+}
+
+exports.get = function(callback) {
+    main(callback);
+}
